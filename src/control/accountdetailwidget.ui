@@ -100,7 +100,7 @@
    </column>
    <column>
     <property name="text">
-     <string>Transaction amount/ACT</string>
+     <string>Transaction amount/ALC</string>
     </property>
     <property name="textAlignment">
      <set>AlignLeading|AlignVCenter</set>
@@ -313,7 +313,7 @@ color: rgb(178, 178, 178);</string>
     </font>
    </property>
    <property name="text">
-    <string>0 SSC</string>
+    <string>0 ALC</string>
    </property>
   </widget>
   <widget class="QLabel" name="balanceLabel2">
@@ -397,7 +397,7 @@ color: rgb(178, 178, 178);</string>
     </rect>
    </property>
    <property name="text">
-    <string>0 SSC</string>
+    <string>0 ALC</string>
    </property>
   </widget>
   <widget class="QToolButton" name="withdrawBtn">

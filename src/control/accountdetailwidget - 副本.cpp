@@ -6,7 +6,7 @@
 #include "../extra/dynamicmove.h"
 #include "datamgr.h"
 #include "rpcmgr.h"
-#include "goopal.h"
+
 #include <QDateTime>
 #include <QDebug>
 #include <QClipboard>
@@ -31,13 +31,7 @@ AccountDetailWidget::AccountDetailWidget( QWidget *parent) :
         delegateLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/delegateLabel_En.png";
         registeredLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/registeredLabel_En.png";
         
-    } 
-	else  if (language.isEmpty() || language == "Korean")
-	{
-		delegateLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/delegateLabel_Ko.png";
-		registeredLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/registeredLabel_Ko.png";
-	}
-	else {
+    } else {
         delegateLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/delegateLabel.png";
         registeredLabelString = DataMgr::getDataMgr()->getWorkPath() + "pic2/registeredLabel.png";
     }
@@ -171,7 +165,6 @@ void AccountDetailWidget::setAccount(QString name) {
     ui->nameLabel->move((this->width() - ui->nameLabel->width()) / 2, 13);
     ui->identityLabel->move(ui->nameLabel->x() - 25, ui->nameLabel->y());
     ui->delegateRankLabel->move(ui->nameLabel->x() + ui->nameLabel->width() + 5, ui->nameLabel->y() - 5);
-
     QString address = DataMgr::getInstance()->getAccountInfo()->value(accountName).address;
     ui->addressLabel->setText(address);
     ui->addressLabel->adjustSize();
@@ -187,10 +180,10 @@ void AccountDetailWidget::setAccount(QString name) {
 
     QString balance;
 	balance = DataMgr::getInstance()->walletCurBalanceByAccountname(accountName);
-    /*if (DataMgr::getInstance()->getCurrentAssetType() == "ALC") {
+    /*if (DataMgr::getInstance()->getCurrentAssetType() == "ACT") {
         balance = DataMgr::getInstance()->getAccountInfo()->value(accountName).balance;
 		balance = "20000"; // todo
-        balance.remove(" ALC");
+        balance.remove(" ACT");
     } else {
         balance = DataMgr::getAccountTokenBalance(accountName, DataMgr::getInstance()->getCurrentAssetType());
     }*/
@@ -203,7 +196,7 @@ void AccountDetailWidget::setAccount(QString name) {
 		ui->transferBtn->setEnabled(true);
 	else
 		ui->transferBtn->setEnabled(false);
-    /*if (DataMgr::getInstance()->getCurrentAssetType() == "ALC") {
+    /*if (DataMgr::getInstance()->getCurrentAssetType() == "ACT") {
         if (balance.toDouble() < 0.010009 - 0.000001) {
             ui->transferBtn->setEnabled(false);
             ui->upgradeBtn->setEnabled(false);
@@ -385,14 +378,13 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
         bool self;
         bool con;
         bool reg;
-		bool isabolished;
     };
 
     QVector <ShowString> showAccountList;
     QString account = accountName;
     
     foreach (TrxResult trx, trxResult) {
-        ShowString showString = {"--", "--", "--", "--", "--", "--", false, false, false, false, false};
+        ShowString showString = {"--", "--", "--", "--", "--", "--", false, false, false, false};
         showString.time_stamp = trx.time_stamp;
 
         if (trx.entries.at(0).memo == "withdraw exec cost") {
@@ -400,11 +392,6 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
                 showString.con = true;
             }
         }
-
-		if (trx.abolished)
-		{
-			showString.isabolished = true;
-		}
 
         foreach(LedgerEntries ledger, trx.entries) {
 
@@ -418,7 +405,7 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
                     }
                     
                     /*if (showString.con)*/ {
-						showString.amount = ledger.amount.amount_div_precision;//QString::number(ledger.amount.amount);
+                        showString.amount = QString::number(ledger.amount.amount);
                     }/* else {
                         showString.amount = QString::number(ledger.amount.amount - 1000);
                     }*/
@@ -426,7 +413,7 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
                     showString.isOut = true;
                     
                 } else {
-					showString.amount = ledger.amount.amount_div_precision;//QString::number(ledger.amount.amount);
+                    showString.amount = QString::number(ledger.amount.amount);
                     showString.account = DataMgr::getInstance()->getAddrAccont(ledger.from_account);
                     
                     if (showString.account.isEmpty()) {
@@ -443,9 +430,8 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
             }
         }
 
-		//showString.amount = QString::number(trx.entries.at(1).amount.amount, 'f', 5);
         if(!showString.isOut && trx.entries.size() == 2)
-			showString.amount = trx.entries.at(1).amount.amount_div_precision;
+            showString.amount = QString::number(trx.entries.at(1).amount.amount, 'f', 5);
 
         showString.balance = trx.entries.at(trx.entries.size() - 1).running_balances;
 
@@ -453,7 +439,7 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
         showString.fee = QString::number(trx.fee.amount);
         
         if (showString.con) {
-            showString.memo = "withdraw exec cost";
+            showString.memo = tr("withdraw exec cost");
             showString.fee = "--";
             showString.account = "CON";
         }
@@ -485,7 +471,7 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
         ShowString str = showAccountList.at(size - (i + 1));
         QTableWidgetItem* item = new QTableWidgetItem(str.account);
         
-        if( str.account.mid(0, 3) != "ALC") {
+        if( str.account.mid(0, 3) != "ACT") {
             item->setTextColor(QColor(64, 154, 255));
         }
         
@@ -497,8 +483,8 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
         QString currentDateTime = time.toString("yyyy-MM-dd hh:mm:ss");
         ui->recentTransactionTableWidget->setItem(i, 0, new QTableWidgetItem(currentDateTime));
         // 金额
+        double amount = str.amount.toDouble() / 100000;
 		//mod zxj
-        double amount = str.amount.toDouble()/* / 100000*/;
 
         
         if (str.reg) {
@@ -525,20 +511,6 @@ void AccountDetailWidget::showRecentTransactions(QString result) {
             item->setTextColor(QColor(255, 80, 63));
             ui->recentTransactionTableWidget->setItem(i, 2, item);
         }
-
-		const QColor color = QColor(255, 160, 122);
-
-		if (str.isabolished && !str.memo.startsWith("claim"))
-		{
-			for (int j = 0; j < ui->recentTransactionTableWidget->columnCount(); j++)
-			{
-				QTableWidgetItem *item = ui->recentTransactionTableWidget->item(i, j);
-				if (item)
-				{
-					item->setBackgroundColor(color);
-				}
-			}
-		}
     }
 }
 void AccountDetailWidget::refresh() {
